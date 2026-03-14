@@ -1,6 +1,8 @@
 import json
 import os
 
+#I made some input sample para po machesk if nagwwwork po also notify me kapag po may error. Thank you po!
+
 class MovieManager:
     def __init__(self, file_name='movies.json'):
         self.file_name = file_name
