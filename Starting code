@@ -18,6 +18,13 @@ class videoMedia_Logger(tk.Tk):
         self.title_entry = tk.Entry(self.left_frame, width=30)
         self.title_entry.grid(row=1, column=0, pady=5)
 
+        tk.Label(self.left_frame, text="Release Date").grid(row=2, column=0, sticky="w")
+        self.date_entry = tk.Entry(self.left_frame, width=30)
+        self.date_entry.grid(row=3, column=0, pady=5)
+
+        tk.Label(self.left_frame, text="Genre").grid(row=4, column=0, sticky="w")
+        self.genre_entry = tk.Entry(self.left_frame, width=30)
+        self.genre_entry.grid(row=5, column=0, pady=5)
 
 Video = videoMedia_Logger()
 Video.mainloop()
