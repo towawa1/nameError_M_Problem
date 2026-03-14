@@ -1,0 +1,68 @@
+import json
+import os
+
+class MovieManager:
+    def __init__(self, file_name='movies.json'):
+        self.file_name = file_name
+        # category to make it organize and easy to access
+        self.data = {"watchlist": [], "favorites": [], "watched": []}
+        self.load_movies()
+
+    def load_movies(self):
+        # checks if nag-eexist yung file kapag hindi ibig sabihin ay empty
+        if not os.path.exists(self.file_name):
+            return 
+        try:
+            with open(self.file_name, 'r') as file:
+                content = json.load(file)
+                # making sure na dictionary and not list
+                if isinstance(content, dict):
+                    self.data = content
+        except (json.JSONDecodeError, FileNotFoundError):
+            pass 
+
+    def user_input(self):
+        # eto yung mga need na input (i guess? for the left panel) title, date release, genre, comment
+        title = input("Title: ")
+        release_date = input("Released: ")
+        genre = input("Genre: ")
+        review = input("Comment: ")
+        # we will ask user kung sa watchlist or sa favorites mapupunta
+        ask = input("Favorite/Watchlist/Watched (f/w/d): ").upper()
+
+        #gento po yung itsura niya sa JSON file
+        new_movie = {
+            "Title": title,
+            "Genre": genre,
+            "Released": release_date,
+            "Comment": review
+        }
+
+        # para malaman kung saan pupunta
+        if ask == "F":
+            self.data["favorites"].append(new_movie)
+        elif ask == "W":
+            self.data["watchlist"].append(new_movie)
+        elif ask == "D":
+            self.data["watched"].append(new_movie)
+        else:
+            print("Invalid category. Movie not saved.")
+            return
+
+        self.save_movies()
+
+    def save_movies(self):
+        # save the data
+        with open(self.file_name, 'w') as file:
+            # indent po is para mas madaling mabasa kapag chineck po natin yung code
+            json.dump(self.data, file, indent=4)
+        print("Movie Saved Successfully!")
+
+    def display_movies(self):
+        # sample po kapag prinint
+        print(json.dumps(self.data, indent=4))
+
+# --- Execution ---
+manager = MovieManager('movies.json')
+manager.user_input()
+manager.display_movies()
