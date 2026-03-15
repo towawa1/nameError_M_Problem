@@ -143,3 +143,21 @@ class MediaManager:
         except Exception as e:
             print(f"Error filtering media: {e}") 
             return []
+
+
+
+"""
+REFERENCES TO HELP:
+https://www.activestate.com/resources/quick-reads/how-to-add-images-in-tkinter/
+https://www.geeksforgeeks.org/python/loading-images-in-tkinter-using-pil/
+https://developer.themoviedb.org/reference/keyword-details
+https://www.themoviedb.org/talk/63c8704870b44400e95a4f82
+https://pypi.org/project/tmdbv3api/
+https://pypi.org/project/movie-metadata/
+https://pypi.org/project/tmdb-python/
+https://youtu.be/FlFyrOEz2S4?si=TujeuFxeRsUgU4N5
+https://youtu.be/-AVvVpzNVnI?si=ujcK2LEUyBYwyJBZ
+https://github.com/leandcesar/themoviedb
+https://github.com/wagnerrp/pytmdb3/
+https://pypi.org/project/tmdb3/
+""""
