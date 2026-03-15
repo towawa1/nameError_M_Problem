@@ -86,7 +86,10 @@ class MediaManager:
                     "id": item.id,
                     "title": getattr(item, 'title', None) or getattr(item, 'name', "Unknown"),
                     "releaseDate": date_str,
-                    "media_type": item.media_type # This will only be 'movie' or 'tv' now
+                    "media_type": item.media_type,
+                    # ADD THESE TWO LINES TO FIX THE KEYERROR:
+                    "overview": getattr(item, 'overview', "No overview available"),
+                    "posterUrl": f"https://image.tmdb.org/t/p/w500{item.poster_path}" if getattr(item, 'poster_path', None) else None
                 })
             combined_list.sort(key=lambda x: x['releaseDate'], reverse=True)
             
