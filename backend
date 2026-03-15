@@ -25,7 +25,7 @@ class MediaManager:
 
         self.loadData()
 
-    def loadData(self):
+    def loadData(self): # Load the media library from the JSON file, pag ang file hindi siya nageexist then gagawa siya ng newfile
         if not os.path.exists(self.dataFile):
             return 
         try:
@@ -36,12 +36,12 @@ class MediaManager:
         except (json.JSONDecodeError, FileNotFoundError):
             pass 
 
-    def saveData(self):
+    def saveData(self): #para ma save ang review niyo po as json
         with open(self.dataFile, 'w') as file:
             json.dump(self.mediaLibrary, file, indent=4)
         print("Media Saved Successfully!")
 
-    def metaData(self, title, isMovie=True):
+    def metaData(self, title, isMovie=True): #Basically the purpose po nito is to get the metadata from the tmdb api. This gets the movies/shows, director/creator, poster, and the synopsis/overview ng show/movie
         try:
             results = self.movieApi.search(title) if isMovie else self.tvApi.search(title)
             if not results:
@@ -69,7 +69,7 @@ class MediaManager:
             print(f"Error fetching metadata: {e}")
             return None
         
-    def searching(self, query):
+    def searching(self, query): #Perform a multi-search across movies, TV shows, and people using a search query. Returns combined results sorted by sa release date niya. Filters out person results to show only the shows and movies, kasi dati for some reason nagaappear ang mga tao
         try:
             from tmdbv3api import Search
             search = Search()
@@ -97,10 +97,10 @@ class MediaManager:
             print(f"Multi-search error: {e}")
             return []
 
-    def add_to_log(self, metadata, category, comment="", rating=0):
+    def add_to_log(self, metadata, category, comment="", rating=0): # Basically it logs your review, rating, and kailan ka gumawa ng review, it also logs the show/movie to your lists
         entry = metadata.copy()
-        entry["user_comment"] = comment
-        entry["user_rating"] = rating  # New: Manual rating
+        entry["user_review"] = review
+        entry["user_rating"] = rating  
         entry["date_logged"] = datetime.now().strftime("%Y-%m-%d")
 
         if category.upper() == "F":
@@ -112,10 +112,10 @@ class MediaManager:
         
         self.saveData()
 
-    def get_library_category(self, category_key):
+    def get_library_category(self, category_key): # Get all items from a specific library category, ang main purpose po nito is to help with the lists po
         return self.mediaLibrary.get(category_key.lower(), [])
-
-    def filter(self, genreId=None, mediaType="movie"):
+    
+    def filter(self, genreId=None, mediaType="movie"): # Filter media by genre and type (movie/tv), ang mga genres is filtered via ids you can see the ids on the tmdb website. PLS do note I haven't tested this properly yet
         try:
             queryParams = {"sort_by": "popularity.desc"}
             if genreId:
