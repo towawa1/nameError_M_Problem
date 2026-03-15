@@ -1,0 +1,138 @@
+import json
+import os
+from datetime import datetime
+from tmdbv3api import TMDb, Movie, TV, Person, Discover
+
+class MediaManager:
+    def __init__(self):
+        self.tmdb = TMDb()
+        self.tmdb.api_key = 'Put API KEY HERE' # Dito po niyo ilalagay ang API Key 
+        self.tmdb.language = 'en'
+        self.tmdb.debug = True
+
+        self.movieApi = Movie()
+        self.tvApi = TV()
+        self.discoverApi = Discover()
+        self.personApi = Person()
+
+        self.dataFile = "media_logs.json"
+        self.mediaLibrary = {"watchlist": [], "favorites": [], "watched": []}
+
+        self.loadData()
+
+    def loadData(self):
+        if not os.path.exists(self.dataFile):
+            return 
+        try:
+            with open(self.dataFile, 'r') as file:
+                content = json.load(file)
+                if isinstance(content, dict):
+                    self.mediaLibrary = content
+        except (json.JSONDecodeError, FileNotFoundError):
+            pass 
+
+    def saveData(self):
+        with open(self.dataFile, 'w') as file:
+            json.dump(self.mediaLibrary, file, indent=4)
+        print("Media Saved Successfully!")
+
+    def metaData(self, title, isMovie=True):
+        try:
+            results = self.movieApi.search(title) if isMovie else self.tvApi.search(title)
+            if not results:
+                return None
+            
+            item = results[0]
+            details = self.movieApi.details(item.id, append_to_response='credits') if isMovie else self.tvApi.details(item.id, append_to_response='credits')
+            
+            directorName = "Unknown"
+            if isMovie:
+                directorName = next((m.name for m in details.credits.crew if m.job == 'Director'), "Unknown")
+            elif hasattr(details, 'created_by') and details.created_by:
+                directorName = details.created_by[0].name
+    
+            return {
+                "title": item.title if isMovie else item.name,
+                "releaseDate": item.release_date if isMovie else (item.first_air_date or "Unknown"),
+                "genres": [g['name'] for g in details.genres] if hasattr(details, 'genres') else [],
+                "director": directorName,
+                "actors": [member.name for member in list(details.credits.cast)[:5]] if hasattr(details, 'credits') else [],
+                "posterUrl": f"https://image.tmdb.org/t/p/w500{item.poster_path}" if item.poster_path else None,
+                "overview": item.overview or "No overview available"
+            }
+        except Exception as e:
+            print(f"Error fetching metadata: {e}")
+            return None
+        
+    def searching(self, query):
+        try:
+            from tmdbv3api import Search
+            search = Search()
+            results = search.multi(term=query)
+            
+            combined_list = []
+            for item in results:
+                if item.media_type == "person":
+                    continue
+    
+                date_str = getattr(item, 'release_date', None) or getattr(item, 'first_air_date', None) or "0000-00-00"
+                
+                combined_list.append({
+                    "id": item.id,
+                    "title": getattr(item, 'title', None) or getattr(item, 'name', "Unknown"),
+                    "releaseDate": date_str,
+                    "media_type": item.media_type # This will only be 'movie' or 'tv' now
+                })
+            combined_list.sort(key=lambda x: x['releaseDate'], reverse=True)
+            
+            return combined_list
+        except Exception as e:
+            print(f"Multi-search error: {e}")
+            return []
+
+    def add_to_log(self, metadata, category, comment="", rating=0):
+        entry = metadata.copy()
+        entry["user_comment"] = comment
+        entry["user_rating"] = rating  # New: Manual rating
+        entry["date_logged"] = datetime.now().strftime("%Y-%m-%d")
+
+        if category.upper() == "F":
+            self.mediaLibrary["favorites"].append(entry)
+        elif category.upper() == "W":
+            self.mediaLibrary["watchlist"].append(entry)
+        elif category.upper() == "D":
+            self.mediaLibrary["watched"].append(entry)
+        
+        self.saveData()
+
+    def get_library_category(self, category_key):
+        return self.mediaLibrary.get(category_key.lower(), [])
+
+    def filter(self, genreId=None, mediaType="movie"):
+        try:
+            queryParams = {"sort_by": "popularity.desc"}
+            if genreId:
+                queryParams["with_genres"] = genreId
+            
+            if mediaType.lower() == "movie":
+                results = self.discoverApi.discover_movies(queryParams)
+            else:
+                results = self.discoverApi.discover_tv_shows(queryParams)
+            
+            filteredResults = []
+            for item in results:
+                isMovie = mediaType.lower() == "movie"
+                metadata = {
+                    "title": item.title if isMovie else item.name,
+                    "releaseDate": item.release_date if isMovie else (getattr(item, 'first_air_date', "Unknown")),
+                    "genres": getattr(item, 'genre_ids', []), 
+                    "overview": item.overview or "No overview available",
+                    "posterUrl": f"https://image.tmdb.org/t/p/w500{item.poster_path}" if item.poster_path else None,
+                    "type": mediaType.lower()
+                }
+                filteredResults.append(metadata)
+            return filteredResults
+            
+        except Exception as e:
+            print(f"Error filtering media: {e}") 
+            return []
