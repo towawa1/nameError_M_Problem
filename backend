@@ -3,6 +3,11 @@ import os
 from datetime import datetime
 from tmdbv3api import TMDb, Movie, TV, Person, Discover
 
+# IMPORTANT NOTE PLS REMEMBER TO INSTALL THE BASH NEEDED the api might not work and posters might not appear
+"""pip install tmdbv3api
+pip install requests
+pip install Pillow"""
+
 class MediaManager:
     def __init__(self):
         self.tmdb = TMDb()
@@ -56,8 +61,8 @@ class MediaManager:
                 "releaseDate": item.release_date if isMovie else (item.first_air_date or "Unknown"),
                 "genres": [g['name'] for g in details.genres] if hasattr(details, 'genres') else [],
                 "director": directorName,
-                "actors": [member.name for member in list(details.credits.cast)[:5]] if hasattr(details, 'credits') else [],
-                "posterUrl": f"https://image.tmdb.org/t/p/w500{item.poster_path}" if item.poster_path else None,
+                "actors": [member.name for member in list(details.credits.cast)[:5]] if hasattr(details, 'credits') else [], 
+                "posterUrl": f"https://image.tmdb.org/t/p/w500{item.poster_path}" if item.poster_path else None, 
                 "overview": item.overview or "No overview available"
             }
         except Exception as e:
