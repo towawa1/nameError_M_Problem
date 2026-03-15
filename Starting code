@@ -41,7 +41,7 @@ class videoMedia_Logger(tk.Tk):
 
         tk.Label(self.left_frame, text="Review / Notes").grid(row=10, column=0, sticky="w")
 
-        self.review_text = tk.Text(self.left_frame, height=8, width=30)
+        self.review_text = tk.Text(self.left_frame, height=10, width=30)
         self.review_text.grid(row=11, column=0, pady=5)
 
 Video = videoMedia_Logger()
