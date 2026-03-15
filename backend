@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from tmdbv3api import TMDb, Movie, TV, Person, Discover
 
-# IMPORTANT NOTE PLS REMEMBER TO INSTALL THE BASH NEEDED the api might not work and posters might not appear
+# IMPORTANT NOTE PLS REMEMBER TO INSTALL THE BASH NEEDED the api might not work and posters might not appear. I am trying to figure out paano nlang to gawin automatic so that the user doesn't need to manually do this
 """pip install tmdbv3api
 pip install requests
 pip install Pillow"""
