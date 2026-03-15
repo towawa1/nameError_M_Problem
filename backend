@@ -87,7 +87,6 @@ class MediaManager:
                     "title": getattr(item, 'title', None) or getattr(item, 'name', "Unknown"),
                     "releaseDate": date_str,
                     "media_type": item.media_type,
-
                     "overview": getattr(item, 'overview', "No overview available"),
                     "posterUrl": f"https://image.tmdb.org/t/p/w500{item.poster_path}" if getattr(item, 'poster_path', None) else None
                 })
