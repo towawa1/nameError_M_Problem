@@ -6,16 +6,14 @@ import tkinter.font as tkFont
 from ttkthemes import ThemedStyle
 import json
 import os
-from PIL import ImageTk, Image
-import urllib.request
-import io
-import threading
+from tkinter import filedialog
+from PIL import Image, ImageTk
 
 class videoMedia_Logger(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("NotLetterBoxd")
-        self.geometry("900x490")
+        self.geometry("950x490")
 
         self.file = "reviews.json"
         self.entries = []
@@ -28,6 +26,9 @@ class videoMedia_Logger(tk.Tk):
 
         self.right_frame = ttk.Frame(self, padding=(15, 15))
         self.right_frame.grid(row=0, column=1, sticky="n")
+
+        self.faright_frame = ttk.Frame(self, padding=(15, 15))
+        self.faright_frame.grid(row=0, column=2, sticky="n")
 
         # inputs(Title, Release, Genre, Review/Notes)
         ttk.Label(self.left_frame, text="Title").grid(row=0, column=0, sticky="w")
@@ -95,7 +96,7 @@ class videoMedia_Logger(tk.Tk):
         self.filter_var = tk.StringVar(value="All")
         filters = ["All", "Movie", "TV Show", "Cartoon", "Anime", "Other"]
 
-        ttk.OptionMenu(filter_frame, self.filter_var, *filters).grid(row=0, column=1)
+        ttk.OptionMenu(filter_frame, self.filter_var, *filters).grid(row=0, column=1,padx=3)
         ttk.Button(filter_frame, text="Apply Filter", command=self.filter_category).grid(row=0, column=2)
 
         # search box for specific review________________________________________________________________
@@ -106,14 +107,14 @@ class videoMedia_Logger(tk.Tk):
         self.load_entries()
 
         # poster widget
-        poster_frame =ttk.Frame(self.right_frame)
-        poster_frame.grid(row=3, column=4, padx=2)
-        poster_label = ttk.Label(poster_frame, text="Poster:").grid(row=0, column=0)
-        self.poster_widget = ttk.Label(poster_frame).grid(row=1, column=0)
-        url_entry = ttk.Entry(poster_frame, width=30).grid(row=0, column=1, padx=10)
-        load_button = ttk.Button(poster_frame, text="Load Image", command=self.get_poster).grid(row=1, column=0)
-
-
+        poster_frame =ttk.Frame(self.faright_frame)
+        poster_frame.grid(row=2, column=4)
+        poster_label = ttk.Label(poster_frame, text="Poster").grid(row=0, column=0)
+        #path_entry = ttk.Entry(poster_frame, width=30).grid(row=0, column=1, padx=10)
+        poster_button = ttk.Button(poster_frame, text="Select Poster", command=self.open_poster).grid(row=1, column=0, padx=100,pady=8)
+        self.path_var = tk.StringVar(value="N/A")
+        self.poster_widget = ttk.Label(poster_frame, text="No poster available.")
+        self.poster_widget.grid(row=2, column=0, pady=21)
 
 
 
@@ -165,7 +166,8 @@ class videoMedia_Logger(tk.Tk):
             "category": self.category_var.get(),
             "rating": self.rating_var.get(),
             "favorite": self.favorite_var.get(),
-            "review": self.review_text.get("1.0", tk.END).strip()
+            "review": self.review_text.get("1.0", tk.END).strip(),
+            "poster": self.path_var.get()
         }
 
         self.entries.append(entry)
@@ -212,7 +214,8 @@ class videoMedia_Logger(tk.Tk):
             "category": self.category_var.get(),
             "rating": self.rating_var.get(),
             "favorite": self.favorite_var.get(),
-            "review": self.review_text.get("1.0", tk.END).strip()
+            "review": self.review_text.get("1.0", tk.END).strip(),
+            "poster": self.path_var.get()
         }
         self.save_file()
         self.display_entries()
@@ -256,25 +259,29 @@ class videoMedia_Logger(tk.Tk):
         self.genre_entry.delete(0, tk.END)
         self.review_text.delete("1.0", tk.END)
 
-    # poster________________________________________________________________
-    def get_poster(self):
-        try:
-            url = self.url_entry.get()
-            print(url)
-            with urllib.request.urlopen(url) as u:
-                raw_data = u.read()
+    # open poster________________________________________________________________
+    def open_poster(self):
+        file_path = filedialog.askopenfilename(
+            title="Select an Image File",
+            filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.gif;*.bmp")]
+        )
 
-                image = Image.open(io.BytesIO(raw_data))
-                image = image.resize((864,1280), Image.Resampling.LANCZOS)
-                photo = ImageTk.PhotoImage(image)
+        if file_path:
 
-                self.poster_widget.config(image=poster)
-                self.poster_widget.image = photo
-                self.poster_widget.config(text="")
+            self.path_var.set(file_path)
+            print(self.path_var.get())
+            image = Image.open(file_path)
 
-        except Exception as e:
-            self.poster_widget.config(text=f"Error uploading poster!: {e}")
-            self.poster_widget.configure(image='')
+            image = image.resize((181, 268), Image.Resampling.LANCZOS)
+
+
+            photo = ImageTk.PhotoImage(image)
+
+
+            self.poster_widget.config(image=photo)
+            self.poster_widget.image = photo
+            messagebox.showinfo("Poster uploaded!", f"Posted located at {file_path}")
+
 
 Video = videoMedia_Logger()
 style = ThemedStyle(Video)
