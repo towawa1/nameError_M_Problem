@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox
-from tkinter import font
 from tkinter import ttk
 from tkinter.ttk import *
 from ttkthemes import ThemedStyle
@@ -11,13 +10,21 @@ class videoMedia_Logger(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("NotLetterBoxd")
-        self.geometry("900x550")
+        self.geometry("900x490")
 
-#main layout(how the stuff is gonna be placed)
+        self.file = "reviews.json"
+        self.entries = []
+        self.filtered_indices = []
+        self.selected_index = None
+
+    #main layout(how the stuff is gonna be placed)
         self.left_frame = ttk.Frame(self, padding = (15,15))
         self.left_frame.grid(row=0, column=0, sticky="n")
 
-#inputs(Title, Release, Genre, Review/Notes)
+        self.right_frame = ttk.Frame(self, padding = (15, 15))
+        self.right_frame.grid(row=0, column=1, sticky="n")
+
+    #inputs(Title, Release, Genre, Review/Notes)
         ttk.Label(self.left_frame, text="Title").grid(row=0, column=0, sticky="w")
         self.title_entry = ttk.Entry(self.left_frame, width=35)
         self.title_entry.grid(row=1, column=0, pady=5)
@@ -34,9 +41,9 @@ class videoMedia_Logger(tk.Tk):
 
         self.category_var = tk.StringVar(value="Movie")
         categories = ["Movie", "TV Show", "Cartoon", "Anime", "Other"]
-        ttk.OptionMenu(self.left_frame, self.category_var, *categories).grid(row=7, column=0, pady=5, sticky="w")
+        ttk.OptionMenu(self.left_frame, self.category_var, categories[0], *categories).grid(row=7, column=0, pady=5, sticky="w")
 
-        ttk.Label(self.left_frame, text="Rating (1-5)").grid(row=8, column=0, sticky="w")
+        ttk.Label(self.left_frame, text="Rating ★").grid(row=8, column=0, sticky="w")
 
         self.rating_var = tk.IntVar(value=5)
         ttk.OptionMenu(self.left_frame, self.rating_var, *range(0, 6)).grid(row=9, column=0, pady=5, sticky="w")
@@ -45,6 +52,169 @@ class videoMedia_Logger(tk.Tk):
 
         self.review_text = tk.Text(self.left_frame, height=10, width=30)
         self.review_text.grid(row=11, column=0, pady=5)
+
+#the add, edit, and delete button________________________________________________________________
+        button_frame = tk.Frame(self.right_frame)
+        button_frame.grid(row=10, column=0, pady=5)
+
+        tk.Button(button_frame, text="Add Entry", width=12, command=self.add_entry).grid(row=0, column=0, padx=3)
+        tk.Button(button_frame, text="Edit Entry", width=12, command=self.edit_entry).grid(row=0, column=1, padx=3)
+
+#The list and other buttons________________________________________________________________
+        search_frame = ttk.Frame(self.right_frame)
+        search_frame.grid(row=2, column=0, pady=5)
+
+        ttk.Label(search_frame, text="Search").grid(row=0, column=0)
+
+        self.search_entry = tk.Entry(search_frame)
+        self.search_entry.grid(row=0, column=1)
+
+        ttk.Button(search_frame, text="Search", command=self.search_entries).grid(row=0, column=2, padx=2)
+        ttk.Button(search_frame, text="Show All", command=self.display_entries).grid(row=0, column=3)
+
+#Categories and filters________________________________________________________________
+        filter_frame = ttk.Frame(self.right_frame)
+        filter_frame.grid(row=3, column=0, pady=5)
+
+        ttk.Label(filter_frame, text="Category Filter").grid(row=0, column=0)
+
+        self.filter_var = tk.StringVar(value="All")
+        filters = ["All", "Movie", "TV Show", "Cartoon", "Anime", "Other"]
+
+        ttk.OptionMenu(filter_frame, self.filter_var, *filters).grid(row=0, column=1)
+        ttk.Button(filter_frame, text="Apply Filter", command=self.filter_category).grid(row=0, column=2)
+
+#search box for specific review________________________________________________________________
+        self.listbox = tk.Listbox(self.right_frame, width=60, height=20)
+        self.listbox.grid(row=4, column=0, pady=10)
+
+        self.listbox.bind("<<ListboxSelect>>", self.select_entry)
+        self.load_entries()
+
+#This just saves the file, I couldn't make it work without it________________________________
+    def save_file(self):
+        with open(self.file, "w") as f:
+            json.dump(self.entries, f, indent=4)
+
+    def load_entries(self):
+        if os.path.exists(self.file):
+            with open(self.file, "r") as f:
+                self.entries = json.load(f)
+        #If there are any missing keys (e.g. added review with no genre)
+        for entry in self.entries:
+            entry.setdefault("category", "Other")
+            entry.setdefault("rating", 5)
+            entry.setdefault("genre", "")
+            entry.setdefault("review", "")
+
+        self.display_entries()
+
+#heres the display for the list________________________________________________________________
+    def display_entries(self, indices=None):
+        self.listbox.delete(0, tk.END)
+        if indices is None:
+            indices = list(range(len(self.entries)))
+
+        self.filtered_indices = indices
+        for i in indices:
+            entry = self.entries[i]
+            text = f"{entry['title']} ({entry['category']}) - Rating: {entry['rating']}"
+            self.listbox.insert(tk.END, text)
+
+#heres the add button________________________________________________________________
+    def add_entry(self):
+        title = self.title_entry.get()
+        if title == "":
+            messagebox.showwarning("Missing title", "Please enter a title.")
+            return
+
+        entry = {
+            "title": title,
+            "date": self.date_entry.get(),
+            "genre": self.genre_entry.get(),
+            "category": self.category_var.get(),
+            "rating": self.rating_var.get(),
+            "review": self.review_text.get("1.0", tk.END).strip()
+        }
+
+        self.entries.append(entry)
+        self.save_file()
+        self.display_entries()
+        self.clear_inputs()
+
+#here you just select it________________________________________________________________
+    def select_entry(self, event):
+        try:
+            list_index = self.listbox.curselection()[0]
+            real_index = self.filtered_indices[list_index]
+
+            self.selected_index = real_index
+            entry = self.entries[real_index]
+
+            self.title_entry.delete(0, tk.END)
+            self.title_entry.insert(0, entry["title"])
+
+            self.date_entry.delete(0, tk.END)
+            self.date_entry.insert(0, entry["date"])
+
+            self.genre_entry.delete(0, tk.END)
+            self.genre_entry.insert(0, entry["genre"])
+
+            self.category_var.set(entry["category"])
+            self.rating_var.set(entry["rating"])
+
+            self.review_text.delete("1.0", tk.END)
+            self.review_text.insert(tk.END, entry["review"])
+
+        except:
+            pass
+
+#editing the review________________________________________________________________
+    def edit_entry(self):
+        if self.selected_index is None:
+            return
+
+        self.entries[self.selected_index] = {
+            "title": self.title_entry.get(),
+            "date": self.date_entry.get(),
+            "genre": self.genre_entry.get(),
+            "category": self.category_var.get(),
+            "rating": self.rating_var.get(),
+            "review": self.review_text.get("1.0", tk.END).strip()
+        }
+        self.save_file()
+        self.display_entries()
+
+#searching for entries________________________________________________________________
+    def search_entries(self):
+        query = self.search_entry.get().lower()
+        indices = [
+            i for i, e in enumerate(self.entries)
+            if query in e["title"].lower()
+        ]
+
+        self.display_entries(indices)
+
+#this is the filter, when you want to look for a specific category________________________________
+    def filter_category(self):
+        category = self.filter_var.get()
+        if category == "All":
+            self.display_entries()
+            return
+
+        indices = [
+            i for i, e in enumerate(self.entries)
+            if e["category"] == category
+        ]
+        
+        self.display_entries(indices)
+
+#this just removes the inputs________________________________________________________________
+    def clear_inputs(self):
+        self.title_entry.delete(0, tk.END)
+        self.date_entry.delete(0, tk.END)
+        self.genre_entry.delete(0, tk.END)
+        self.review_text.delete("1.0", tk.END)
 
 Video = videoMedia_Logger()
 style = ThemedStyle(Video)
