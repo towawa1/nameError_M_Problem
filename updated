@@ -115,7 +115,8 @@ class videoMedia_Logger(tk.Tk):
         self.path_var = tk.StringVar(value="")
         self.poster_widget = ttk.Label(poster_frame, text="No poster available.")
         self.poster_widget.grid(row=2, column=0, pady=21)
-
+        clear_poster_button = ttk.Button(poster_frame, text="Clear Poster", command=self.clear_poster).grid(row=3,
+                                                                                                            column=0)
 
 
 
@@ -174,6 +175,7 @@ class videoMedia_Logger(tk.Tk):
         self.save_file()
         self.display_entries()
         self.clear_inputs()
+        self.poster_widget.config(image='',text='No poster available.')
 
     # here you just select it________________________________________________________________
     def select_entry(self, event):
@@ -202,8 +204,7 @@ class videoMedia_Logger(tk.Tk):
             self.favorite_var.set(entry["favorite"])
             self.path_var.set(entry["poster"])
 
-            self.listbox.bind("<<ListboxSelect>>", self.load_poster)
-
+            self.listbox.bind("<<ListboxSelect>>", self.load_poster, self.select_entry)
         except:
             pass
 
@@ -225,6 +226,8 @@ class videoMedia_Logger(tk.Tk):
         self.save_file()
         self.display_entries()
 
+        # this print statement is for testing
+        #print(self.entries)
     # deleting the review________________________________________________________________
     def delete_entry(self):
         if self.selected_index is None:
@@ -233,6 +236,7 @@ class videoMedia_Logger(tk.Tk):
 
         self.save_file()
         self.display_entries()
+        self.poster_widget.config(image='', text='No poster available.')
     # searching for entries________________________________________________________________
     def search_entries(self):
         query = self.search_entry.get().lower()
@@ -285,8 +289,9 @@ class videoMedia_Logger(tk.Tk):
 
             self.poster_widget.config(image=photo)
             self.poster_widget.image = photo
-            messagebox.showinfo("Poster uploaded!", f"Posted located at {file_path}")
-
+            messagebox.showinfo("Poster uploaded!", f"Poster located in {file_path}.")
+            # this print statement is for testing
+            #print(self.entries)
     # load poster________________________________________________________________
     def load_poster(self, event):
         try:
@@ -294,7 +299,8 @@ class videoMedia_Logger(tk.Tk):
 
             selected_item_data = self.entries[selection_index]
             file_path = selected_item_data["poster"]
-
+            if file_path == "":
+                self.poster_widget.config(image='',text='No poster available.')
             if os.path.exists(file_path):
                 image = Image.open(file_path)
 
@@ -304,14 +310,29 @@ class videoMedia_Logger(tk.Tk):
 
                 self.poster_widget.config(image=photo)
                 self.poster_widget.image = photo
-            else:
-                poster_widget.config(text='No poster available.')
         except IndexError:
             pass
         except FileNotFoundError:
             print(f"Error: Image file not found at {image_path}")
-            self.poster_label.config(text='No poster available.')
+            self.poster_label.config(image='',text='No poster available.')
+        # this print statement is for testing
+        #print(self.entries)
+    # clear poster________________________________________________________________
+    def clear_poster(self):
+        try:
+            selection_index = self.listbox.curselection()[0]
+            selected_item_data = self.entries[selection_index]
+            file_path = selected_item_data["poster"]
 
+            if os.path.exists(file_path):
+                self.poster_widget.config(image='',text='No poster available.')
+                selected_item_data["poster"] = ""
+
+                self.save_file()
+                # this print statement is for testing
+                #print(self.entries)
+        except IndexError:
+            pass
 Video = videoMedia_Logger()
 style = ThemedStyle(Video)
 style.set_theme("plastik")
