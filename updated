@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter.ttk import *
-import tkinter.font as tkFont
+
 from ttkthemes import ThemedStyle
 import json
 import os
@@ -112,7 +112,7 @@ class videoMedia_Logger(tk.Tk):
         poster_label = ttk.Label(poster_frame, text="Poster").grid(row=0, column=0)
         #path_entry = ttk.Entry(poster_frame, width=30).grid(row=0, column=1, padx=10)
         poster_button = ttk.Button(poster_frame, text="Upload Poster", command=self.open_poster).grid(row=1, column=0, padx=100,pady=8)
-        self.path_var = tk.StringVar(value="N/A")
+        self.path_var = tk.StringVar(value="")
         self.poster_widget = ttk.Label(poster_frame, text="No poster available.")
         self.poster_widget.grid(row=2, column=0, pady=21)
 
@@ -202,6 +202,8 @@ class videoMedia_Logger(tk.Tk):
             self.favorite_var.set(entry["favorite"])
             self.path_var.set(entry["poster"])
 
+            self.listbox.bind("<<ListboxSelect>>", self.load_poster)
+
         except:
             pass
 
@@ -286,16 +288,29 @@ class videoMedia_Logger(tk.Tk):
             messagebox.showinfo("Poster uploaded!", f"Posted located at {file_path}")
 
     # load poster________________________________________________________________
-    def load_poster(self):
-        file_path = self.entries[self.selected_index]["poster"]
-        image = Image.open(file_path)
+    def load_poster(self, event):
+        try:
+            selection_index = self.listbox.curselection()[0]
 
-        image = image.resize((181, 268), Image.Resampling.LANCZOS)
+            selected_item_data = self.entries[selection_index]
+            file_path = selected_item_data["poster"]
 
-        photo = ImageTk.PhotoImage(image)
+            if os.path.exists(file_path):
+                image = Image.open(file_path)
 
-        self.poster_widget.config(image=photo)
-        self.poster_widget.image = photo
+                image = image.resize((181, 268), Image.Resampling.LANCZOS)
+
+                photo = ImageTk.PhotoImage(image)
+
+                self.poster_widget.config(image=photo)
+                self.poster_widget.image = photo
+            else:
+                poster_widget.config(text='No poster available.')
+        except IndexError:
+            pass
+        except FileNotFoundError:
+            print(f"Error: Image file not found at {image_path}")
+            self.poster_label.config(text='No poster available.')
 
 Video = videoMedia_Logger()
 style = ThemedStyle(Video)
